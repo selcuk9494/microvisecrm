@@ -1,5 +1,4 @@
 name: iOS TestFlight
-
 on:
   workflow_dispatch:
     inputs:
@@ -15,11 +14,9 @@ on:
 jobs:
   build-and-submit:
     runs-on: macos-latest
-
     defaults:
       run:
         working-directory: packages/mobile
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,9 +32,14 @@ jobs:
       - name: Install dependencies
         run: npm i --workspaces=false
 
+      - name: Verify Expo login
+        run: npx --yes eas-cli whoami
+        env:
+          EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
+
       - name: Build and Auto-Submit to TestFlight
         env:
-          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+          EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
           EXPO_PUBLIC_WEB_ORIGIN: ${{ github.event.inputs.webOrigin || vars.EXPO_PUBLIC_WEB_ORIGIN || secrets.EXPO_PUBLIC_WEB_ORIGIN }}
         run: |
           eas build -p ios --profile production --non-interactive --auto-submit
