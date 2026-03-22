@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "f12655d8-0d9f-4ed8-a261-c7cbf542c073"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.selcuktilmaz.istakip",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
