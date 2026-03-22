@@ -1,0 +1,29 @@
+{
+  "cli": {
+    "version": ">= 18.4.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_WEB_ORIGIN": "https://app.microvisecrm.com"
+      },
+      "ios": {
+        "image": "latest"
+      }
+    },
+    "internal": {
+      "ios": {
+        "developmentClient": true,
+        "distribution": "internal"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleTeamId": "A7PVY89X76"
+      }
+    }
+  }
+}

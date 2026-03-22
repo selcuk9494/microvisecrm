@@ -1,0 +1,336 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  personel
+}
+
+enum LineStatus {
+  aktif
+  pasif
+}
+
+enum LicenseStatus {
+  aktif
+  pasif
+}
+
+enum WorkOrderStatus {
+  acik
+  devam
+  kapali
+}
+
+enum Priority {
+  dusuk
+  orta
+  yuksek
+}
+
+enum NotifChannel {
+  in_app
+  email
+  push
+}
+
+enum NotifType {
+  hat_30
+  hat_7
+  gmp3_bitis
+  yeni_is_emri
+}
+
+model Organization {
+  id           String          @id @default(uuid())
+  name         String
+  createdAt    DateTime        @default(now())
+  users        User[]
+  customers    Customer[]
+  operators    Operator[]
+  lines        Line[]
+  licenses     Gmp3License[]
+  workOrders   WorkOrder[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  files        File[]
+  workOrderTypes WorkOrderType[]
+  softwareVendors SoftwareVendor[]
+  payments     Payment[]
+  branches     Branch[]
+}
+
+model User {
+  id           String    @id @default(uuid())
+  orgId        String
+  org          Organization @relation(fields: [orgId], references: [id])
+  name         String
+  phone        String?
+  email        String     @unique
+  passwordHash String
+  role         Role
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  refreshTokens RefreshToken[]
+  assignedWorkOrders WorkOrder[] @relation("WorkOrderAssigned")
+  workNotesAuthored WorkOrderNote[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  revokedAt  DateTime?
+}
+
+model Customer {
+  id            String    @id @default(uuid())
+  orgId         String
+  org           Organization @relation(fields: [orgId], references: [id])
+  customerName  String
+  companyName   String?
+  phone         String?
+  email         String?
+  address       String?
+  taxNumber     String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  deletedAt     DateTime?
+  lines         Line[]
+  licenses      Gmp3License[]
+  workOrders    WorkOrder[]
+  payments      Payment[]
+  branches      Branch[]
+}
+
+model Operator {
+  id      String @id @default(uuid())
+  orgId   String
+  org     Organization @relation(fields: [orgId], references: [id])
+  name    String
+  code    String?
+  lines   Line[]
+  @@unique([orgId, name])
+}
+
+model Line {
+  id             String     @id @default(uuid())
+  orgId          String
+  org            Organization @relation(fields: [orgId], references: [id])
+  customerId     String
+  customer       Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lineNumber     String
+  imeiNumber     String?
+  operatorId     String?
+  operator       Operator?  @relation(fields: [operatorId], references: [id])
+  activationDate DateTime?
+  endDate        DateTime?
+  status         LineStatus @default(aktif)
+  description    String?
+  createdAt      DateTime   @default(now())
+  deletedAt      DateTime?
+  gmp3Licenses   Gmp3License[]
+  @@unique([orgId, lineNumber])
+  @@index([endDate])
+}
+
+model Gmp3License {
+  id             String        @id @default(uuid())
+  orgId          String
+  org            Organization  @relation(fields: [orgId], references: [id])
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lineId         String?
+  line           Line?         @relation(fields: [lineId], references: [id])
+  vendorId       String?
+  vendor         SoftwareVendor? @relation(fields: [vendorId], references: [id])
+  licenseName    String?
+  licenseKey     String?
+  activationDate DateTime?
+  endDate        DateTime?
+  device         String?
+  status         LicenseStatus @default(aktif)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  deletedAt      DateTime?
+  @@unique([orgId, licenseKey])
+  @@index([endDate])
+  @@index([lineId])
+  @@index([vendorId])
+}
+
+model WorkOrder {
+  id             String           @id @default(uuid())
+  orgId          String
+  org            Organization     @relation(fields: [orgId], references: [id])
+  orderNumber    String
+  customerId     String
+  customer       Customer         @relation(fields: [customerId], references: [id])
+  branchId       String?
+  branch         Branch?          @relation(fields: [branchId], references: [id])
+  description    String
+  assignedUserId String?
+  assignedUser   User?            @relation("WorkOrderAssigned", fields: [assignedUserId], references: [id])
+  typeId         String?
+  type           WorkOrderType?   @relation(fields: [typeId], references: [id])
+  priority       Priority         @default(orta)
+  status         WorkOrderStatus  @default(acik)
+  createdAt      DateTime         @default(now())
+  dueDate        DateTime?
+  completedAt    DateTime?
+  notes          String?
+  deletedAt      DateTime?
+  attachments    WorkOrderAttachment[]
+  workNotes      WorkOrderNote[]
+  payments       Payment[]
+  locationAddress String?
+  locationLat     Float?
+  locationLng     Float?
+  @@unique([orgId, orderNumber])
+  @@index([status])
+}
+
+model WorkOrderNote {
+  id            String    @id @default(uuid())
+  workOrderId   String
+  workOrder     WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  authorUserId  String?
+  authorUser    User?     @relation(fields: [authorUserId], references: [id])
+  content       String
+  createdAt     DateTime  @default(now())
+}
+
+model File {
+  id          String    @id @default(uuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id])
+  bucket      String?
+  key         String?
+  url         String?
+  fileName    String?
+  contentType String?
+  size        BigInt?
+  uploadedBy  String?
+  createdAt   DateTime  @default(now())
+  attachments WorkOrderAttachment[]
+}
+
+model WorkOrderAttachment {
+  id          String   @id @default(uuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  fileId      String
+  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+model Payment {
+  id           String        @id @default(uuid())
+  orgId        String
+  org          Organization  @relation(fields: [orgId], references: [id])
+  workOrderId  String
+  workOrder    WorkOrder     @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  customerId   String
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  amount       Float
+  note         String?
+  paidAt       DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+  @@index([paidAt])
+}
+model Notification {
+  id               String       @id @default(uuid())
+  orgId            String
+  org              Organization @relation(fields: [orgId], references: [id])
+  recipientUserId  String?
+  recipientUser    User?        @relation(fields: [recipientUserId], references: [id])
+  channel          NotifChannel
+  type             NotifType
+  title            String
+  body             String
+  payload          Json?
+  status           String       @default("queued")
+  scheduledAt      DateTime?
+  sentAt           DateTime?
+  readAt           DateTime?
+  createdAt        DateTime     @default(now())
+  @@index([status])
+}
+
+model AuditLog {
+  id            String       @id @default(uuid())
+  orgId         String
+  org           Organization @relation(fields: [orgId], references: [id])
+  actorUserId   String?
+  actorUser     User?        @relation(fields: [actorUserId], references: [id])
+  action        String
+  entityType    String
+  entityId      String?
+  beforeData    Json?
+  afterData     Json?
+  ip            String?
+  createdAt     DateTime     @default(now())
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  orgId     String
+  userId    String
+  pageKey   String
+  name      String
+  params    Json
+  createdAt DateTime @default(now())
+  @@unique([orgId, userId, pageKey, name])
+}
+
+model WorkOrderType {
+  id        String   @id @default(uuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id])
+  name      String
+  code      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  workOrders WorkOrder[]
+  @@unique([orgId, name])
+}
+
+model SoftwareVendor {
+  id        String   @id @default(uuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id])
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  gmp3Licenses Gmp3License[]
+  @@unique([orgId, name])
+}
+
+model Branch {
+  id        String   @id @default(uuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id])
+  customerId String
+  customer  Customer @relation(fields: [customerId], references: [id])
+  name      String
+  address   String?
+  lat       Float?
+  lng       Float?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  workOrders WorkOrder[]
+  @@unique([orgId, customerId, name])
+}

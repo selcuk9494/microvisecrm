@@ -1,0 +1,14 @@
+node_modules
+.git
+.expo
+.DS_Store
+dist
+build
+ios/Pods
+ios/build
+android/build
+android/app/build
+.env*
+*.log
+**/.watchman*
+**/.cache/**
