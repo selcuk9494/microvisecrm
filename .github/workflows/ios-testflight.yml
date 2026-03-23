@@ -26,11 +26,18 @@ jobs:
         with:
           node-version: 20
 
+      - name: Force npm and disable workspaces
+        run: |
+          corepack disable
+          npm config set workspaces false
+          npm config set fund false
+          npm config set audit false
+
       - name: Install EAS CLI
         run: npm i -g eas-cli
 
-      - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+      - name: Install dependencies (npm only, no workspaces)
+        run: npm install --workspaces=false --legacy-peer-deps
 
       - name: Verify Expo login
         run: npx --yes eas-cli whoami
