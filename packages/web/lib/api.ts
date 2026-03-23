@@ -1,28 +1,14 @@
 "use client";
 
 export function apiBase() {
-  const fromEnv = process.env.NEXT_PUBLIC_API_URL;
-  if (fromEnv) return fromEnv;
-  if (typeof window !== "undefined") {
-    const proto = window.location.protocol || "http:";
-    const host = window.location.hostname || "localhost";
-    return `${proto}//${host}:3001`;
-  }
-  return "http://localhost:3001";
+  if (typeof window !== "undefined") return "/api";
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 }
 
 function apiBases(): string[] {
   const primary = apiBase();
   try {
-    if (typeof window !== "undefined") {
-      const u = new URL(primary);
-      if (u.hostname === "localhost") {
-        return [primary, `${u.protocol}//127.0.0.1:${u.port || "3001"}`];
-      }
-      if (u.hostname === "127.0.0.1") {
-        return [primary, `${u.protocol}//localhost:${u.port || "3001"}`];
-      }
-    }
+    if (typeof window !== "undefined") return [primary];
   } catch {}
   return [primary];
 }
