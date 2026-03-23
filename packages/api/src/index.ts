@@ -2,7 +2,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import bcrypt from "bcryptjs";
-import { prisma } from "./prisma";
+import { prisma } from "./prisma.js";
 import { FastifyRequest } from "fastify";
 
 const app = Fastify();
