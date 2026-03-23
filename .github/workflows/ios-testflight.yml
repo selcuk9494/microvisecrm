@@ -7,6 +7,12 @@ on:
         description: 'EXPO_PUBLIC_WEB_ORIGIN'
         required: false
 
+  push:
+    branches: [ main ]
+    paths:
+      - 'packages/mobile/**'
+      - '.github/workflows/ios-testflight.yml'
+
 jobs:
   build-and-submit:
     runs-on: macos-latest
@@ -27,7 +33,7 @@ jobs:
       - name: Install EAS CLI
         run: npm i -g eas-cli
 
-      - name: Install dependencies
+      - name: Install dependencies (npm only)
         run: npm install --workspaces=false --no-audit --no-fund --legacy-peer-deps
 
       - name: Verify Expo login
