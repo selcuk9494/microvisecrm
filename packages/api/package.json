@@ -3,28 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "dist/index.js",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
-    "dev": "sh -c 'export DATABASE_URL=${DATABASE_URL:-postgresql://istakip:istakip@localhost:5432/istakip?schema=public}; npm run build && node dist/index.js'",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "DATABASE_URL=${DATABASE_URL:-postgresql://istakip:istakip@localhost:5432/istakip?schema=public} prisma migrate dev",
-    "prisma:deploy": "DATABASE_URL=${DATABASE_URL:-postgresql://istakip:istakip@localhost:5432/istakip?schema=public} prisma migrate deploy",
-    "prisma:seed": "node --loader ts-node/esm prisma/seed.ts"
+    "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@fastify/cors": "^8.4.2",
-    "@fastify/jwt": "^8.0.1",
+    "@fastify/cors": "^9.0.1",
+    "@fastify/jwt": "^8.0.0",
     "@prisma/client": "^5.22.0",
-    "bcrypt": "^5.1.1",
-    "fastify": "^4.26.2",
-    "xlsx": "^0.18.5"
+    "bcryptjs": "^2.4.3",
+    "fastify": "^4.26.2"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
+    "@types/node": "^20.11.19",
     "prisma": "^5.22.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.4.5"
   }
 }

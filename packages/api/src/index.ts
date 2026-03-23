@@ -1,8 +1,8 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
-import bcrypt from "bcrypt";
-import { prisma } from "./prisma.js";
+import bcrypt from "bcryptjs";
+import { prisma } from "./prisma";
 import { FastifyRequest } from "fastify";
 
 const app = Fastify();
@@ -1269,7 +1269,11 @@ app.delete("/work-order-types/:id", { preHandler: [(app as any).authenticate, ad
   return { ok: true };
 });
 
-const port = Number(process.env.PORT || 3001);
-app.listen({ port, host: "0.0.0.0" }).then(() => {
-  console.log(`api on ${port}`);
-});
+export default app;
+
+if (!process.env.VERCEL) {
+  const port = Number(process.env.PORT || 3001);
+  app.listen({ port, host: "0.0.0.0" }).then(() => {
+    console.log(`api on ${port}`);
+  });
+}
