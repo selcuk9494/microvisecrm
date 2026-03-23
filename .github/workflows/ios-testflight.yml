@@ -1,39 +1,47 @@
 name: iOS TestFlight
+
 on:
   workflow_dispatch:
     inputs:
       webOrigin:
-        description: 'EXPO_PUBLIC_WEB_ORIGIN (leave empty to use repo variable/secret)'
+        description: 'EXPO_PUBLIC_WEB_ORIGIN'
         required: false
+
 jobs:
   build-and-submit:
     runs-on: macos-latest
+
     defaults:
       run:
         working-directory: packages/mobile
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Install EAS CLI
         run: npm i -g eas-cli
-      - name: Install dependencies (npm only)
+
+      - name: Install dependencies
         run: npm install --workspaces=false --no-audit --no-fund --legacy-peer-deps
+
       - name: Verify Expo login
         run: npx --yes eas-cli whoami
         env:
           EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
-      - name: Build (no auto-submit)
+
+      - name: Build (no submit)
         env:
           EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
           EXPO_PUBLIC_WEB_ORIGIN: ${{ github.event.inputs.webOrigin || vars.EXPO_PUBLIC_WEB_ORIGIN || secrets.EXPO_PUBLIC_WEB_ORIGIN }}
-        run: |
-          eas build -p ios --profile production --non-interactive
+        run: eas build -p ios --profile production --non-interactive
+
       - name: Submit to TestFlight
         env:
           EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
-        run: |
-          eas submit -p ios --latest --non-interactive --asc-app-id ${{ secrets.ASC_APP_ID }}
+        run: eas submit -p ios --latest --non-interactive --asc-app-id ${{ secrets.ASC_APP_ID }}
