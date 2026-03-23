@@ -7,8 +7,8 @@
     "start": "expo start",
     "ios": "expo run:ios",
     "build:ios": "eas build -p ios --profile production",
-    "submit:ios": "eas submit -p ios --latest",
-    "release:ios": "eas build -p ios --profile production --non-interactive --auto-submit"
+    "submit:ios": "ASC_APP_ID=${ASC_APP_ID} eas submit -p ios --latest --non-interactive --asc-app-id $ASC_APP_ID",
+    "release:ios": "eas build -p ios --profile production --non-interactive && ASC_APP_ID=${ASC_APP_ID} eas submit -p ios --latest --non-interactive --asc-app-id $ASC_APP_ID"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",
@@ -22,5 +22,9 @@
   "devDependencies": {
     "babel-preset-expo": "^11.0.11",
     "eas-cli": "^18.4.0"
+  },
+  "packageManager": "npm@10.8.2",
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

@@ -2,6 +2,9 @@ import "./globals.css";
 import Sidebar from "../components/Sidebar";
 import { ToastProvider } from "../components/Toast";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const link = (href: string, label: string) => (
     <a href={href} className="block rounded-md px-3 py-2 text-slate-200 hover:bg-slate-700 hover:text-white">
