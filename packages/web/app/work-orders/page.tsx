@@ -98,6 +98,48 @@ export default function WorkOrders() {
     return list;
   }, [rows, tab, search]);
 
+  function initials(name: string) {
+    const parts = String(name || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  function priorityMeta(priority: string) {
+    if (priority === "yuksek") return { label: "Kritik", color: "text-rose-700", bg: "bg-rose-100", arrow: "up" as const };
+    if (priority === "orta") return { label: "Orta", color: "text-amber-700", bg: "bg-amber-100", arrow: "right" as const };
+    return { label: "Düşük", color: "text-emerald-700", bg: "bg-emerald-100", arrow: "down" as const };
+  }
+
+  function statusMeta(status: string) {
+    if (status === "acik") return { label: "Atandı", color: "text-brand-800", bg: "bg-brand-100" };
+    if (status === "devam") return { label: "Çalışıyor", color: "text-emerald-700", bg: "bg-emerald-100" };
+    return { label: "Kapalı", color: "text-slate-700", bg: "bg-slate-200" };
+  }
+
+  function slaMeta(w: any) {
+    const now = Date.now();
+    const createdAt = w.createdAt ? new Date(w.createdAt).getTime() : now;
+    const dueAt = w.dueDate ? new Date(w.dueDate).getTime() : null;
+    if (!dueAt || isNaN(dueAt)) return { pct: 0, label: "", bar: "bg-slate-200", text: "text-slate-500" };
+    const total = Math.max(1, dueAt - createdAt);
+    const elapsed = now - createdAt;
+    const rawPct = (elapsed / total) * 100;
+    const overdue = now > dueAt;
+    const day = 86400000;
+    const diffDays = overdue ? Math.ceil((now - dueAt) / day) : Math.ceil((dueAt - now) / day);
+    const label = overdue ? `Gecikti +${diffDays}g` : `Kalan ${diffDays}g`;
+    const pct = Math.max(0, Math.min(100, rawPct));
+    const bar = overdue ? "bg-rose-600" : diffDays <= 2 ? "bg-amber-500" : "bg-emerald-600";
+    const text = overdue ? "text-rose-700" : diffDays <= 2 ? "text-amber-700" : "text-emerald-700";
+    return { pct, label, bar, text };
+  }
+
+  const openLike = tab === "open" || (tab === "all" && status === "acik");
+
   function toggleSelect(id: string, checked: boolean) {
     setSelected((s) => checked ? Array.from(new Set([...s, id])) : s.filter((x) => x !== id));
   }
@@ -445,142 +487,260 @@ export default function WorkOrders() {
       </div>
       <div className="card overflow-hidden">
         <table className="w-full table-auto text-sm">
-          <thead className="bg-white text-left">
-            <tr>
-              <th className="px-3 py-2">
-                <input
-                  type="checkbox"
-                  checked={selected.length > 0 && selected.length === filteredRows.length}
-                  onChange={e => toggleSelectAll(e.target.checked, filteredRows)}
-                />
-              </th>
-              <th className="px-3 py-2 cursor-pointer" onClick={() => onSort("orderNumber")}>Numara {sortKey==="orderNumber" ? (sortDir==="asc"?"▲":"▼") : ""}</th>
-              <th className="px-3 py-2">Açıklama</th>
-              <th className="px-3 py-2">Müşteri</th>
-              <th className="px-3 py-2">Şube</th>
-              <th className="px-3 py-2">Personel</th>
-              <th className="px-3 py-2 cursor-pointer" onClick={() => onSort("priority")}>Öncelik {sortKey==="priority" ? (sortDir==="asc"?"▲":"▼") : ""}</th>
-              <th className="px-3 py-2 cursor-pointer" onClick={() => onSort("status")}>Durum {sortKey==="status" ? (sortDir==="asc"?"▲":"▼") : ""}</th>
-              <th className="px-3 py-2">Vade</th>
-              <th className="px-3 py-2">Oluşturma</th>
-              <th className="px-3 py-2">Tamamlandı</th>
-              <th className="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRows.map((w) => {
-              const c = customers.find((x:any)=>x.id===w.customerId);
-              const u = users.find((x:any)=>x.id===w.assignedUserId);
-              const prColor = w.priority === "yuksek" ? "bg-rose-100 text-rose-700" : w.priority === "orta" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700";
-              const stColor = w.status === "acik" ? "bg-sky-100 text-sky-700" : w.status === "devam" ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-700";
-              return (
-              <tr key={w.id} className={`border-t align-top ${w.deletedAt ? "text-slate-400 line-through opacity-70" : ""}`}>
-                <td className="px-3 py-2">
-                  <input type="checkbox" checked={selected.includes(w.id)} onChange={e => toggleSelect(w.id, e.target.checked)} />
-                </td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-block h-2 w-2 rounded-full ${w.status==="acik"?"bg-sky-500":w.status==="devam"?"bg-amber-500":"bg-slate-500"}`} />
-                    <span className="font-medium">{w.orderNumber}</span>
-                  </div>
-                  {w.type?.name && <div className="mt-1 text-xs text-slate-500">{w.type.name}</div>}
-                </td>
-                <td className="px-3 py-2">
-                  <div className="whitespace-pre-wrap break-words">{w.description || "-"}</div>
-                  {w.notes && <div className="mt-1 text-xs text-slate-500 whitespace-pre-wrap break-words">{w.notes}</div>}
-                </td>
-                <td className="px-3 py-2">{c?.customerName || w.customerId || "-"}</td>
-                <td className="px-3 py-2">{(w as any).branch?.name || "-"}</td>
-                <td className="px-3 py-2">{u?.name || w.assignedUserId || "-"}</td>
-                <td className="px-3 py-2">
-                  <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${prColor}`}>{w.priority}</span>
-                </td>
-                <td className="px-3 py-2">
-                  <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${stColor}`}>{w.status}</span>
-                </td>
-                <td className="px-3 py-2">{w.dueDate ? new Date(w.dueDate).toLocaleString("tr-TR") : ""}</td>
-                <td className="px-3 py-2">{w.createdAt ? new Date(w.createdAt).toLocaleString("tr-TR") : ""}</td>
-                <td className="px-3 py-2">{w.completedAt ? new Date(w.completedAt).toLocaleString("tr-TR") : ""}</td>
-                <td className="px-3 py-2">
-                  <div className="flex gap-2">
-                    {!w.deletedAt ? (
-                      <>
-                        <button className="btn btn-secondary" onClick={() => openEdit(w.id)}>Düzenle</button>
-                        {w.status!=="kapali" && (
+          {openLike ? (
+            <>
+              <thead className="bg-slate-50 text-left text-xs font-semibold text-slate-600">
+                <tr>
+                  <th className="px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selected.length > 0 && selected.length === filteredRows.length}
+                      onChange={(e) => toggleSelectAll(e.target.checked, filteredRows)}
+                    />
+                  </th>
+                  <th className="px-3 py-3">İş Emri Tipi</th>
+                  <th className="px-3 py-3 cursor-pointer" onClick={() => onSort("orderNumber")}>
+                    Kod {sortKey === "orderNumber" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                  <th className="px-3 py-3">Grup</th>
+                  <th className="px-3 py-3">Kullanıcı</th>
+                  <th className="px-3 py-3">Vaka Nedeni</th>
+                  <th className="px-3 py-3 cursor-pointer" onClick={() => onSort("priority")}>
+                    Öncelik {sortKey === "priority" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                  <th className="px-3 py-3">Süre</th>
+                  <th className="px-3 py-3 cursor-pointer" onClick={() => onSort("dueDate")}>
+                    Hedeflenen Çözüm Zamanı {sortKey === "dueDate" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                  <th className="px-3 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((w) => {
+                  const c = (w as any).customer || customers.find((x: any) => x.id === w.customerId);
+                  const u = (w as any).assignedUser || users.find((x: any) => x.id === w.assignedUserId);
+                  const pr = priorityMeta(w.priority);
+                  const st = statusMeta(w.status);
+                  const sla = slaMeta(w);
+                  const group = (w as any).branch?.name || c?.companyName || c?.customerName || "-";
+                  const vak = w.type?.name || "-";
+                  const person = u?.name || "-";
+                  return (
+                    <tr key={w.id} className={`border-t align-middle ${w.deletedAt ? "text-slate-400 line-through opacity-70" : "hover:bg-slate-50/50"}`}>
+                      <td className="px-3 py-3">
+                        <input type="checkbox" checked={selected.includes(w.id)} onChange={(e) => toggleSelect(w.id, e.target.checked)} />
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="font-semibold text-slate-900">{w.type?.name || "TEKNİK GÖREV"}</div>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.bg} ${st.color}`}>{st.label}</span>
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${pr.bg} ${pr.color}`}>{pr.label}</span>
+                          <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">SLA</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <a className="font-semibold text-brand-700 hover:underline" href={`/work-orders/${w.id}`}>
+                          {w.orderNumber || "-"}
+                        </a>
+                        <div className="mt-1 text-xs text-slate-500">{c?.customerName || c?.companyName || ""}</div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="text-slate-900">{group}</div>
+                        <div className="mt-1 text-xs text-slate-500">{(w as any).branch?.address || w.locationAddress || ""}</div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-extrabold text-brand-800">
+                            {initials(person)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate font-semibold text-slate-900">{person}</div>
+                            <div className="truncate text-xs text-slate-500">{c?.customerName || ""}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="font-semibold text-slate-900">{vak}</div>
+                        <div className="mt-1 line-clamp-2 max-w-md text-xs text-slate-500">{w.description || ""}</div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`inline-flex h-8 w-8 items-center justify-center rounded-full ${pr.bg} ${pr.color}`}>
+                            {pr.arrow === "up" ? "↑" : pr.arrow === "right" ? "→" : "↓"}
+                          </div>
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${pr.bg} ${pr.color}`}>{pr.label}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="w-56">
+                          <div className="h-3 w-full rounded-full bg-slate-200">
+                            <div className={`h-3 rounded-full ${sla.bar}`} style={{ width: `${sla.pct}%` }} />
+                          </div>
+                          <div className={`mt-2 text-xs font-semibold ${sla.text}`}>{sla.label}</div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="font-semibold text-slate-900">{w.dueDate ? new Date(w.dueDate).toLocaleString("tr-TR") : "-"}</div>
+                        <div className="mt-1 text-xs text-slate-500">{w.createdAt ? `Oluşturma: ${new Date(w.createdAt).toLocaleDateString("tr-TR")}` : ""}</div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex gap-2">
+                          <a className="btn btn-secondary" href={`/work-orders/${w.id}`}>Detay</a>
+                          {!w.deletedAt ? <button className="btn btn-secondary" onClick={() => openEdit(w.id)}>Düzenle</button> : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {!loading && filteredRows.length === 0 && (
+                  <tr>
+                    <td colSpan={10} className="px-3 py-10 text-center text-slate-500">
+                      Kayıt bulunamadı
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </>
+          ) : (
+            <>
+              <thead className="bg-white text-left">
+                <tr>
+                  <th className="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selected.length > 0 && selected.length === filteredRows.length}
+                      onChange={e => toggleSelectAll(e.target.checked, filteredRows)}
+                    />
+                  </th>
+                  <th className="px-3 py-2 cursor-pointer" onClick={() => onSort("orderNumber")}>Numara {sortKey==="orderNumber" ? (sortDir==="asc"?"▲":"▼") : ""}</th>
+                  <th className="px-3 py-2">Açıklama</th>
+                  <th className="px-3 py-2">Müşteri</th>
+                  <th className="px-3 py-2">Şube</th>
+                  <th className="px-3 py-2">Personel</th>
+                  <th className="px-3 py-2 cursor-pointer" onClick={() => onSort("priority")}>Öncelik {sortKey==="priority" ? (sortDir==="asc"?"▲":"▼") : ""}</th>
+                  <th className="px-3 py-2 cursor-pointer" onClick={() => onSort("status")}>Durum {sortKey==="status" ? (sortDir==="asc"?"▲":"▼") : ""}</th>
+                  <th className="px-3 py-2">Vade</th>
+                  <th className="px-3 py-2">Oluşturma</th>
+                  <th className="px-3 py-2">Tamamlandı</th>
+                  <th className="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((w) => {
+                  const c = customers.find((x:any)=>x.id===w.customerId);
+                  const u = users.find((x:any)=>x.id===w.assignedUserId);
+                  const prColor = w.priority === "yuksek" ? "bg-rose-100 text-rose-700" : w.priority === "orta" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700";
+                  const stColor = w.status === "acik" ? "bg-sky-100 text-sky-700" : w.status === "devam" ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-700";
+                  return (
+                  <tr key={w.id} className={`border-t align-top ${w.deletedAt ? "text-slate-400 line-through opacity-70" : ""}`}>
+                    <td className="px-3 py-2">
+                      <input type="checkbox" checked={selected.includes(w.id)} onChange={e => toggleSelect(w.id, e.target.checked)} />
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-block h-2 w-2 rounded-full ${w.status==="acik"?"bg-sky-500":w.status==="devam"?"bg-amber-500":"bg-slate-500"}`} />
+                        <span className="font-medium">{w.orderNumber}</span>
+                      </div>
+                      {w.type?.name && <div className="mt-1 text-xs text-slate-500">{w.type.name}</div>}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="whitespace-pre-wrap break-words">{w.description || "-"}</div>
+                      {w.notes && <div className="mt-1 text-xs text-slate-500 whitespace-pre-wrap break-words">{w.notes}</div>}
+                    </td>
+                    <td className="px-3 py-2">{c?.customerName || w.customerId || "-"}</td>
+                    <td className="px-3 py-2">{(w as any).branch?.name || "-"}</td>
+                    <td className="px-3 py-2">{u?.name || w.assignedUserId || "-"}</td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${prColor}`}>{w.priority}</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${stColor}`}>{w.status}</span>
+                    </td>
+                    <td className="px-3 py-2">{w.dueDate ? new Date(w.dueDate).toLocaleString("tr-TR") : ""}</td>
+                    <td className="px-3 py-2">{w.createdAt ? new Date(w.createdAt).toLocaleString("tr-TR") : ""}</td>
+                    <td className="px-3 py-2">{w.completedAt ? new Date(w.completedAt).toLocaleString("tr-TR") : ""}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex gap-2">
+                        {!w.deletedAt ? (
                           <>
-                            <button
-                              className="btn btn-secondary"
-                              onClick={async () => {
-                                setClosingId(w.id);
-                                setPaymentAmount("");
-                                setPaymentNote("");
-                                try {
-                                  const d = await apiFetch(`/work-orders/${w.id}`);
-                                  setClosingBranchId(d.branch?.id || "");
-                                  setClosingLocationAddress(d.locationAddress || d.branch?.address || "");
-                                  setClosingLocationLat(d.locationLat ? String(d.locationLat) : d.branch?.lat ? String(d.branch.lat) : "");
-                                  setClosingLocationLng(d.locationLng ? String(d.locationLng) : d.branch?.lng ? String(d.branch.lng) : "");
-                                  const bs = await apiFetch(`/customers/${d.customerId}/branches`);
-                                  setClosingBranches(bs.data || []);
-                                } catch {}
-                              }}
-                            >
-                              Kapat
-                            </button>
-                            <button
-                              className="btn btn-secondary"
-                              onClick={async () => {
-                                if (!w.customerId) return;
-                                const coords = w.locationLat && w.locationLng ? { lat: w.locationLat, lng: w.locationLng } : null;
-                                if (!coords && !(w.branch?.lat && w.branch?.lng)) return;
-                                const lat = String(coords?.lat || w.branch?.lat);
-                                const lng = String(coords?.lng || w.branch?.lng);
-                                try {
-                                  const d = await apiFetch(`/branches/nearest?customer_id=${encodeURIComponent(w.customerId)}&lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
-                                  if (d?.data?.id) {
-                                    setClosingBranchId(d.data.id);
-                                  }
-                                } catch {}
-                              }}
-                            >
-                              Konumdan Şube Öner
-                            </button>
-                            {(w.locationLat && w.locationLng) || w.locationAddress || (w.branch?.address) ? (
-                              <a
-                                className="btn btn-secondary"
-                                href={
-                                  (w.locationLat && w.locationLng)
-                                    ? `https://www.google.com/maps/dir/?api=1&destination=${w.locationLat},${w.locationLng}`
-                                    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(w.locationAddress || w.branch?.address || "")}`
-                                }
-                                target="_blank" rel="noreferrer"
-                              >
-                                Yol Tarifi
-                              </a>
-                            ) : null}
+                            <button className="btn btn-secondary" onClick={() => openEdit(w.id)}>Düzenle</button>
+                            {w.status!=="kapali" && (
+                              <>
+                                <button
+                                  className="btn btn-secondary"
+                                  onClick={async () => {
+                                    setClosingId(w.id);
+                                    setPaymentAmount("");
+                                    setPaymentNote("");
+                                    try {
+                                      const d = await apiFetch(`/work-orders/${w.id}`);
+                                      setClosingBranchId(d.branch?.id || "");
+                                      setClosingLocationAddress(d.locationAddress || d.branch?.address || "");
+                                      setClosingLocationLat(d.locationLat ? String(d.locationLat) : d.branch?.lat ? String(d.branch.lat) : "");
+                                      setClosingLocationLng(d.locationLng ? String(d.locationLng) : d.branch?.lng ? String(d.branch.lng) : "");
+                                      const bs = await apiFetch(`/customers/${d.customerId}/branches`);
+                                      setClosingBranches(bs.data || []);
+                                    } catch {}
+                                  }}
+                                >
+                                  Kapat
+                                </button>
+                                <button
+                                  className="btn btn-secondary"
+                                  onClick={async () => {
+                                    if (!w.customerId) return;
+                                    const coords = w.locationLat && w.locationLng ? { lat: w.locationLat, lng: w.locationLng } : null;
+                                    if (!coords && !(w.branch?.lat && w.branch?.lng)) return;
+                                    const lat = String(coords?.lat || w.branch?.lat);
+                                    const lng = String(coords?.lng || w.branch?.lng);
+                                    try {
+                                      const d = await apiFetch(`/branches/nearest?customer_id=${encodeURIComponent(w.customerId)}&lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+                                      if (d?.data?.id) {
+                                        setClosingBranchId(d.data.id);
+                                      }
+                                    } catch {}
+                                  }}
+                                >
+                                  Konumdan Şube Öner
+                                </button>
+                                {(w.locationLat && w.locationLng) || w.locationAddress || (w.branch?.address) ? (
+                                  <a
+                                    className="btn btn-secondary"
+                                    href={
+                                      (w.locationLat && w.locationLng)
+                                        ? `https://www.google.com/maps/dir/?api=1&destination=${w.locationLat},${w.locationLng}`
+                                        : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(w.locationAddress || w.branch?.address || "")}`
+                                    }
+                                    target="_blank" rel="noreferrer"
+                                  >
+                                    Yol Tarifi
+                                  </a>
+                                ) : null}
+                              </>
+                            )}
+                            <button className="btn btn-secondary" onClick={() => setToDelete(w.id)}>Sil</button>
                           </>
+                        ) : (
+                          <button
+                            className="btn btn-secondary"
+                            onClick={async () => {
+                              await apiFetch(`/work-orders/${w.id}/restore`, { method: "PATCH" });
+                              await load();
+                            }}
+                          >
+                            {loading ? "..." : "Geri Al"}
+                          </button>
                         )}
-                        <button className="btn btn-secondary" onClick={() => setToDelete(w.id)}>Sil</button>
-                      </>
-                    ) : (
-                      <button
-                        className="btn btn-secondary"
-                        onClick={async () => {
-                          await apiFetch(`/work-orders/${w.id}/restore`, { method: "PATCH" });
-                          await load();
-                        }}
-                      >
-                        {loading ? "..." : "Geri Al"}
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            )})}
-            {!loading && filteredRows.length === 0 && (
-              <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-500">Kayıt bulunamadı</td></tr>
-            )}
-          </tbody>
+                      </div>
+                    </td>
+                  </tr>
+                )})}
+                {!loading && filteredRows.length === 0 && (
+                  <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-500">Kayıt bulunamadı</td></tr>
+                )}
+              </tbody>
+            </>
+          )}
         </table>
       </div>
       <div className="mt-3 flex items-center justify-between">
