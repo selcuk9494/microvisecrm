@@ -556,7 +556,18 @@ app.get("/work-orders", { preHandler: (app as any).authenticate }, async (req, r
   const page = Number(q.page || 1);
   const pageSize = Math.min(Number(q.pageSize || 20), 200);
   const where: any = { orgId: (req as any).user?.org_id };
-  if (q["filter[status]"]) where.status = q["filter[status]"];
+  if (q["filter[status]"]) {
+    const raw = String(q["filter[status]"]);
+    if (raw.includes(",")) {
+      const parts = raw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (parts.length) where.status = { in: parts };
+    } else {
+      where.status = raw;
+    }
+  }
   if (q["filter[customer_id]"]) where.customerId = q["filter[customer_id]"];
   if (q["filter[assigned_user_id]"]) where.assignedUserId = q["filter[assigned_user_id]"];
   if (q["filter[type_id]"]) where.typeId = q["filter[type_id]"];
@@ -578,17 +589,39 @@ app.get("/work-orders", { preHandler: (app as any).authenticate }, async (req, r
   }
   const sortBy = (q.sort_by || q.sortBy || "createdAt") as string;
   const sortDir = (q.sort_dir || q.sortDir || "desc") === "asc" ? "asc" : "desc";
-  const orderByField = ["createdAt", "orderNumber", "priority", "status"].includes(sortBy) ? sortBy : "createdAt";
+  const orderByField = ["createdAt", "orderNumber", "priority", "status", "dueDate"].includes(sortBy) ? sortBy : "createdAt";
   const [total, items] = await Promise.all([
     prisma.workOrder.count({ where }),
-    (prisma as any).workOrder.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { [orderByField]: sortDir } as any, include: { type: true, branch: true } })
+    (prisma as any).workOrder.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { [orderByField]: sortDir } as any,
+      include: {
+        type: true,
+        branch: true,
+        customer: { select: { id: true, customerName: true, companyName: true } },
+        assignedUser: { select: { id: true, name: true, active: true } },
+      },
+    })
   ]);
   return { data: items, page, pageSize, total };
 });
 
 app.get("/work-orders/:id", { preHandler: (app as any).authenticate }, async (req, reply) => {
   const id = (req as any).params.id;
-  const item = await (prisma as any).workOrder.findUnique({ where: { id }, include: { attachments: true, workNotes: true, type: true, branch: true } });
+  const item = await (prisma as any).workOrder.findUnique({
+    where: { id },
+    include: {
+      attachments: true,
+      workNotes: true,
+      payments: true,
+      type: true,
+      branch: true,
+      customer: { select: { id: true, customerName: true, companyName: true, phone: true, email: true } },
+      assignedUser: { select: { id: true, name: true, active: true } },
+    },
+  });
   return item || reply.code(404).send({ error: "not_found" });
 });
 
@@ -712,6 +745,27 @@ app.patch("/work-orders/:id/status", { preHandler: (app as any).authenticate }, 
   return updated;
 });
 
+app.post("/work-orders/:id/payments", { preHandler: (app as any).authenticate }, async (req: any, reply) => {
+  const id = req.params.id;
+  const body = req.body || {};
+  const amount = Number(body.amount);
+  if (isNaN(amount) || amount <= 0) return reply.code(400).send({ error: "invalid_amount" });
+  const wo = await prisma.workOrder.findUnique({ where: { id } });
+  if (!wo || wo.orgId !== req.user.org_id) return reply.code(404).send({ error: "not_found" });
+  const payment = await (prisma as any).payment.create({
+    data: {
+      orgId: wo.orgId,
+      workOrderId: id,
+      customerId: wo.customerId,
+      amount,
+      note: body.note ?? null,
+      paidAt: body.paid_at ? new Date(body.paid_at) : new Date(),
+    },
+  });
+  await logAudit(req, "create", "payment", payment.id, null, payment);
+  return payment;
+});
+
 app.delete("/work-orders/:id", { preHandler: [(app as any).authenticate, adminOnly] }, async (req: any, reply) => {
   const id = req.params.id;
   const before = await prisma.workOrder.findUnique({ where: { id } });
@@ -730,7 +784,15 @@ app.patch("/work-orders/:id/restore", { preHandler: (app as any).authenticate },
 
 app.get("/work-orders/assigned/me", { preHandler: (app as any).authenticate }, async (req: any, reply) => {
   const userId = req.user?.sub;
-  const items = await prisma.workOrder.findMany({ where: { assignedUserId: userId, status: { in: ["acik", "devam"] } }, orderBy: { createdAt: "desc" } });
+  const items = await prisma.workOrder.findMany({
+    where: { assignedUserId: userId, status: { in: ["acik", "devam"] } },
+    orderBy: { createdAt: "desc" },
+    include: {
+      type: true,
+      branch: true,
+      customer: { select: { id: true, customerName: true, companyName: true } },
+    },
+  });
   return { data: items };
 });
 
