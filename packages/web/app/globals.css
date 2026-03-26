@@ -7,7 +7,7 @@ html, body, :root {
 }
 
 body {
-  @apply bg-slate-50 text-slate-800;
+  @apply bg-app-bg text-app-ink;
 }
 
 .btn {
@@ -24,7 +24,7 @@ body {
 }
 
 .card {
-  @apply rounded-lg border border-slate-200 bg-white shadow-sm;
+  @apply rounded-2xl border border-app-border bg-app-card shadow-sm;
 }
 
 .input {
@@ -33,4 +33,29 @@ body {
 
 .label {
   @apply text-sm font-medium text-slate-700;
+}
+
+.app-shell {
+  @apply min-h-screen bg-app-bg;
+}
+
+.topbar {
+  @apply sticky top-0 z-40 flex items-center justify-between gap-3 px-5 py-4 text-white;
+  background: linear-gradient(90deg, #5b21b6 0%, #6d28d9 55%, #7c3aed 100%);
+}
+
+.stat-grid {
+  @apply grid gap-4 sm:grid-cols-2 xl:grid-cols-4;
+}
+
+.stat-tile {
+  @apply rounded-2xl p-5 text-white shadow-sm;
+}
+
+.stat-tile .label {
+  @apply text-white/80;
+}
+
+.stat-tile .value {
+  @apply mt-2 text-4xl font-extrabold tracking-tight;
 }

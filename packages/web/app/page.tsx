@@ -53,52 +53,33 @@ export default function Dashboard() {
   ];
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
       {stats && (stats.linesExpiring > 0 || stats.linesExpired > 0) && (
         <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
           Yaklaşan: {stats.linesExpiring} hat, Süresi dolmuş: {stats.linesExpired} hat. <a className="underline" href="/reports">Raporlar</a>
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2">
-        <a className="btn btn-primary" href="/lines/new">Yeni Hat</a>
+        <a className="btn btn-primary" href="/work-orders/new">Yeni İş Emri</a>
+        <a className="btn btn-secondary" href="/customers/new">Yeni Müşteri</a>
+        <a className="btn btn-secondary" href="/lines/new">Yeni Hat</a>
         <a className="btn btn-secondary" href="/licenses/new">Yeni Lisans</a>
-        <a className="btn btn-secondary" href="/work-orders/new">Yeni İş Emri</a>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((c) => (
-          <div key={c.title} className="card p-4">
-            <div className="text-sm text-slate-500">{c.title}</div>
-            <div className="mt-2 flex items-end justify-between gap-4">
-              <div className="text-2xl font-bold">{loading ? "…" : c.value}</div>
-              <div className="h-10 w-24">
-                <svg viewBox="0 0 100 40" className="h-full w-full">
-                  <polyline
-                    fill="none"
-                    stroke="#0ea5e9"
-                    strokeWidth="2"
-                    points={trend.length ? trend.map((v, i) => `${i * 20},${40 - v * 0.4}`).join(" ") : "0,40 20,35 40,30 60,25 80,20 100,15"}
-                  />
-                </svg>
-              </div>
-            </div>
-            {stats && (
-              <div className="mt-2 h-2 w-full overflow-hidden rounded bg-slate-100">
-                <div
-                  className="h-2 bg-sky-500 transition-all"
-                  style={{
-                    width:
-                      c.title === "Aktif Hat" && stats.customers ? `${Math.min(100, Math.round((stats.activeLines / Math.max(1, stats.customers)) * 100))}%`
-                      : c.title === "Yaklaşan Hatlar" && stats.activeLines ? `${Math.min(100, Math.round((stats.linesExpiring / Math.max(1, stats.activeLines)) * 100))}%`
-                      : c.title === "Süresi Dolmuş Hatlar" && stats.activeLines ? `${Math.min(100, Math.round((stats.linesExpired / Math.max(1, stats.activeLines)) * 100))}%`
-                      : c.title === "Aktif GMP3 Lisansları" && stats.customers ? `${Math.min(100, Math.round((stats.activeLicenses / Math.max(1, stats.customers)) * 100))}%`
-                      : c.title === "Açık İş Emirleri" ? `${Math.min(100, Math.round((stats.openWorkOrders / Math.max(1, stats.customers)) * 100))}%`
-                      : "25%"
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        ))}
+      <div className="stat-grid">
+        {cards.map((c, idx) => {
+          const bg =
+            idx === 0 ? "bg-gradient-to-br from-[#fb7185] to-[#f97316]"
+            : idx === 1 ? "bg-gradient-to-br from-[#60a5fa] to-[#7c3aed]"
+            : idx === 2 ? "bg-gradient-to-br from-[#a78bfa] to-[#6d28d9]"
+            : idx === 3 ? "bg-gradient-to-br from-[#fb7185] to-[#be123c]"
+            : idx === 4 ? "bg-gradient-to-br from-[#34d399] to-[#059669]"
+            : "bg-gradient-to-br from-[#fbbf24] to-[#f97316]";
+          return (
+            <a key={c.title} href={c.title === "Açık İş Emirleri" ? "/work-orders?filter[status]=acik" : "/"} className={`stat-tile ${bg}`}>
+              <div className="label text-sm font-semibold">{c.title}</div>
+              <div className="value">{loading ? "…" : c.value}</div>
+            </a>
+          );
+        })}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card p-4">

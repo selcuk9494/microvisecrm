@@ -15,6 +15,9 @@ tmp
 *.log
 .vercel
 .vscode
+log/
+microvisecrm-mobile/
+microvisecrm-mobile-backup/
 packages/mobile/.home
 packages/mobile/.expo
 packages/mobile/ios/Pods

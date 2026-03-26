@@ -377,14 +377,14 @@ export default function WorkOrders() {
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-2">
-          <button className={`rounded-full px-3 py-1 text-sm ${tab==="all"?"bg-slate-900 text-white":"bg-slate-100 text-slate-700"}`} onClick={() => setTab("all")}>Tümü</button>
-          <button className={`rounded-full px-3 py-1 text-sm ${tab==="open"?"bg-sky-600 text-white":"bg-slate-100 text-slate-700"}`} onClick={() => setTab("open")}>Açık</button>
-          <button className={`rounded-full px-3 py-1 text-sm ${tab==="progress"?"bg-amber-500 text-white":"bg-slate-100 text-slate-700"}`} onClick={() => setTab("progress")}>Devam</button>
-          <button className={`rounded-full px-3 py-1 text-sm ${tab==="closed"?"bg-slate-700 text-white":"bg-slate-100 text-slate-700"}`} onClick={() => setTab("closed")}>Kapalı</button>
-          <button className={`rounded-full px-3 py-1 text-sm ${tab==="high"?"bg-rose-600 text-white":"bg-slate-100 text-slate-700"}`} onClick={() => setTab("high")}>Yüksek Öncelik</button>
-          <button className={`rounded-full px-3 py-1 text-sm ${tab==="today"?"bg-emerald-600 text-white":"bg-slate-100 text-slate-700"}`} onClick={() => setTab("today")}>Bugün (vade)</button>
-          <button className={`rounded-full px-3 py-1 text-sm ${tab==="overdue"?"bg-rose-700 text-white":"bg-slate-100 text-slate-700"}`} onClick={() => setTab("overdue")}>Geciken</button>
-          <button className={`rounded-full px-3 py-1 text-sm ${tab==="upcoming"?"bg-teal-600 text-white":"bg-slate-100 text-slate-700"}`} onClick={() => setTab("upcoming")}>Yaklaşan 7g</button>
+          <button className={`rounded-full px-4 py-2 text-sm font-semibold ${tab==="all"?"bg-brand-800 text-white":"bg-white text-app-ink border border-app-border"}`} onClick={() => setTab("all")}>Tümü</button>
+          <button className={`rounded-full px-4 py-2 text-sm font-semibold ${tab==="open"?"bg-brand-600 text-white":"bg-white text-app-ink border border-app-border"}`} onClick={() => setTab("open")}>Açık</button>
+          <button className={`rounded-full px-4 py-2 text-sm font-semibold ${tab==="progress"?"bg-brand-500 text-white":"bg-white text-app-ink border border-app-border"}`} onClick={() => setTab("progress")}>Devam</button>
+          <button className={`rounded-full px-4 py-2 text-sm font-semibold ${tab==="closed"?"bg-slate-800 text-white":"bg-white text-app-ink border border-app-border"}`} onClick={() => setTab("closed")}>Kapalı</button>
+          <button className={`rounded-full px-4 py-2 text-sm font-semibold ${tab==="high"?"bg-rose-600 text-white":"bg-white text-app-ink border border-app-border"}`} onClick={() => setTab("high")}>Yüksek Öncelik</button>
+          <button className={`rounded-full px-4 py-2 text-sm font-semibold ${tab==="today"?"bg-emerald-600 text-white":"bg-white text-app-ink border border-app-border"}`} onClick={() => setTab("today")}>Bugün (vade)</button>
+          <button className={`rounded-full px-4 py-2 text-sm font-semibold ${tab==="overdue"?"bg-rose-700 text-white":"bg-white text-app-ink border border-app-border"}`} onClick={() => setTab("overdue")}>Geciken</button>
+          <button className={`rounded-full px-4 py-2 text-sm font-semibold ${tab==="upcoming"?"bg-teal-600 text-white":"bg-white text-app-ink border border-app-border"}`} onClick={() => setTab("upcoming")}>Yaklaşan 7g</button>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <input className="input" placeholder="Ara: numara, açıklama, not" value={search} onChange={e => setSearch(e.target.value)} />
@@ -445,7 +445,7 @@ export default function WorkOrders() {
       </div>
       <div className="card overflow-hidden">
         <table className="w-full table-auto text-sm">
-          <thead className="bg-slate-100 text-left">
+          <thead className="bg-white text-left">
             <tr>
               <th className="px-3 py-2">
                 <input

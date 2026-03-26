@@ -120,10 +120,10 @@ export default function Sidebar() {
     });
   }
   return (
-    <aside className={`${collapsed ? "w-16" : "w-64"} bg-[#162a45] text-white transition-all`}>
+    <aside className={`${collapsed ? "w-16" : "w-64"} text-white transition-all`} style={{ background: "linear-gradient(180deg, #5b21b6 0%, #312e81 100%)" }}>
       <div className="flex items-center justify-between px-4 py-4">
         <div className={`${collapsed ? "text-base" : "text-lg"} font-bold`}>{collapsed ? "MV" : "Microvise CRM"}</div>
-        <button className="rounded-md px-2 py-1 text-slate-200 hover:bg-slate-700" onClick={toggleCollapsed}>
+        <button className="rounded-md px-2 py-1 text-white/80 hover:bg-white/10" onClick={toggleCollapsed}>
           {collapsed ? "›" : "‹"}
         </button>
       </div>
@@ -134,14 +134,14 @@ export default function Sidebar() {
           return (
             <div
               key={g.key}
-              className={`relative rounded-md ${active ? "border-l-4 border-sky-500" : ""}`}
+              className={`relative rounded-xl ${active ? "border-l-4 border-white/70" : ""}`}
               onMouseEnter={() => setHoverKey(g.key)}
               onMouseLeave={() => setHoverKey(k => (k === g.key ? null : k))}
             >
               <a
                 href={g.href}
                 onClick={(e) => { if (hasChildren) { e.preventDefault(); toggleGroup(g.key); } }}
-                className={`flex items-center justify-between rounded-md px-3 py-2 ${active ? "bg-slate-800 text-white" : "text-slate-200 hover:bg-slate-700 hover:text-white"}`}
+                className={`flex items-center justify-between rounded-xl px-3 py-2 ${active ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10 hover:text-white"}`}
                 title={collapsed ? g.label : undefined}
               >
                 <span className="flex items-center">
@@ -155,8 +155,8 @@ export default function Sidebar() {
                 )}
               </a>
               {hasChildren && open[g.key] && !collapsed && (
-                <div className="ml-1 mt-1 rounded-md border border-slate-600 bg-[#102037]">
-                  <div className="my-2 h-px w-full bg-slate-600"></div>
+                <div className="ml-1 mt-1 rounded-xl border border-white/15 bg-white/10">
+                  <div className="my-2 h-px w-full bg-white/15"></div>
                   <div className="grid gap-1 px-2 py-1">
                     {(g.children || []).map((c) => {
                       const cActive = pathname === c.href || pathname.startsWith(c.href);
@@ -164,7 +164,7 @@ export default function Sidebar() {
                         <a
                           key={c.href}
                           href={c.href}
-                          className={`block rounded-md px-3 py-2 ${cActive ? "bg-slate-800 text-white" : "text-slate-200 hover:bg-slate-700 hover:text-white"}`}
+                          className={`block rounded-xl px-3 py-2 ${cActive ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10 hover:text-white"}`}
                         >
                           {c.label}
                         </a>
@@ -174,8 +174,8 @@ export default function Sidebar() {
                 </div>
               )}
               {hasChildren && collapsed && hoverKey === g.key && (
-                <div className="absolute left-full top-0 z-50 ml-2 w-56 rounded-md border border-slate-600 bg-[#102037] shadow-lg">
-                  <div className="my-2 h-px w-full bg-slate-600"></div>
+                <div className="absolute left-full top-0 z-50 ml-2 w-56 rounded-xl border border-white/15 bg-[#24104d] shadow-lg">
+                  <div className="my-2 h-px w-full bg-white/15"></div>
                   <div className="grid gap-1 px-2 py-1">
                     {(g.children || []).map((c) => {
                       const cActive = pathname === c.href || pathname.startsWith(c.href);
@@ -183,7 +183,7 @@ export default function Sidebar() {
                         <a
                           key={c.href}
                           href={c.href}
-                          className={`block rounded-md px-3 py-2 ${cActive ? "bg-slate-800 text-white" : "text-slate-200 hover:bg-slate-700 hover:text-white"}`}
+                          className={`block rounded-xl px-3 py-2 ${cActive ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10 hover:text-white"}`}
                         >
                           {c.label}
                         </a>
