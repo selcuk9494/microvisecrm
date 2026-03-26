@@ -6,6 +6,10 @@ html, body, :root {
   height: 100%;
 }
 
+html {
+  scroll-padding-bottom: 140px;
+}
+
 body {
   @apply bg-app-bg text-app-ink;
 }
@@ -33,6 +37,12 @@ body {
 
 .label {
   @apply text-sm font-medium text-slate-700;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  scroll-margin-bottom: 140px;
 }
 
 .app-shell {

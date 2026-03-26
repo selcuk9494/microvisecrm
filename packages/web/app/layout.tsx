@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Sidebar />
             <main className="flex-1">
               <Topbar />
-              <div className="p-6">{children}</div>
+              <div className="p-6 pb-24">{children}</div>
             </main>
           </div>
           <div id="portal-root" />
