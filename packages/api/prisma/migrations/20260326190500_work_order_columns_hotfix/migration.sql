@@ -1,0 +1,8 @@
+ALTER TABLE "WorkOrder" ADD COLUMN IF NOT EXISTS "branchId" TEXT;
+ALTER TABLE "WorkOrder" ADD COLUMN IF NOT EXISTS "dueDate" TIMESTAMP(3);
+ALTER TABLE "WorkOrder" ADD COLUMN IF NOT EXISTS "locationAddress" TEXT;
+ALTER TABLE "WorkOrder" ADD COLUMN IF NOT EXISTS "locationLat" DOUBLE PRECISION;
+ALTER TABLE "WorkOrder" ADD COLUMN IF NOT EXISTS "locationLng" DOUBLE PRECISION;
+
+CREATE INDEX IF NOT EXISTS "WorkOrder_branchId_idx" ON "WorkOrder"("branchId");
+CREATE INDEX IF NOT EXISTS "WorkOrder_dueDate_idx" ON "WorkOrder"("dueDate");
